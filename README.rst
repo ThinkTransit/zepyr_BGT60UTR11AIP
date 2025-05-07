@@ -9,7 +9,7 @@ west build -b nrf5340dk/nrf5340/cpuapp .
 Expected output
 ********
 
-Code performs read/write test.
+Code performs read/write test to register 0x06.
 
 Code reads value from registers 0x00, 0x01 and 0x02
 
