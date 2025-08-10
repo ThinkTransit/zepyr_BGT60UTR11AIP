@@ -40,6 +40,31 @@
 	};
 };
 
+// Radar reset pin control - P0.09
+/ {
+	radar_reset: radar-reset {
+		compatible = "gpio-leds";
+		radar_reset_pin: radar_reset_pin {
+			gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;  // Active low reset
+			label = "Radar Reset";
+		};
+	};
+	
+	// Radar crystal power control - P1.08
+	radar_power: radar-power {
+		compatible = "gpio-leds";
+		radar_crystal_pin: radar_crystal_pin {
+			gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;  // P1.08 - Active high (ground-side MOSFET)
+			label = "Radar Crystal Power";
+		};
+	};
+	
+	aliases {
+		radar-reset = &radar_reset_pin;
+		radar-crystal = &radar_crystal_pin;
+	};
+};
+
 &spi1 {
 	compatible = "nordic,nrf-spim";
 	status = "okay";
@@ -47,11 +72,13 @@
 	pinctrl-0 = <&spi1_default>;
 	pinctrl-1 = <&spi1_sleep>;
 	pinctrl-names = "default", "sleep";
-	gendev: gendev@0 {
-		compatible = "vnd,spi-device";
+	
+	bgt60: bgt60@0 {
+		compatible = "infineon,bgt60";
 		reg = <0>;
 		spi-max-frequency = <1600000>;
-		label = "GenDev";
 	};
 };
+
+// IPC and BLE disabled
 

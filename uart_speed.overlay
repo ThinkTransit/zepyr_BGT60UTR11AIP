@@ -1,0 +1,7 @@
+// High-speed UART configuration for faster data transfer
+// This sets UART0 (console) to higher baudrate
+
+&uart0 {
+	current-speed = <921600>;  // 8x faster than default 115200
+	status = "okay";
+};
