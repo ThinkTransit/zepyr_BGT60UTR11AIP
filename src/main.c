@@ -38,7 +38,7 @@ static const struct device *bgt60_dev;
 
 // GPIO for radar crystal power control
 static const struct gpio_dt_spec radar_crystal = GPIO_DT_SPEC_GET(DT_ALIAS(radar_crystal), gpios);
-static bool radar_powered = true;  // Assume initially powered
+static bool radar_powered = false;  // Default to OFF for safety
 
 // Try to get the device node directly instead of using the macro
 #define BGT60_NODE DT_NODELABEL(bgt60)
@@ -920,15 +920,15 @@ static int cmd_radar_power_on(const struct shell *sh, size_t argc, char **argv)
 		return ret;
 	}
 	
-	// For ground-side MOSFET: HIGH = ON (MOSFET conducts to ground)
-	ret = gpio_pin_set_dt(&radar_crystal, 1);
+	// For ground-side MOSFET: LOW = ON (MOSFET conducts to ground)
+	ret = gpio_pin_set_dt(&radar_crystal, 0);
 	if (ret < 0) {
 		shell_error(sh, "Failed to set radar crystal GPIO: %d", ret);
 		return ret;
 	}
 	
 	radar_powered = true;
-	shell_print(sh, "✓ Radar crystal powered ON (P1.08 = HIGH, MOSFET conducting)");
+	shell_print(sh, "✓ Radar crystal powered ON (P1.08 = LOW, MOSFET conducting)");
 	
 	// Wait a bit for crystal to stabilize
 	k_sleep(K_MSEC(100));
@@ -952,15 +952,15 @@ static int cmd_radar_power_off(const struct shell *sh, size_t argc, char **argv)
 		return ret;
 	}
 	
-	// For ground-side MOSFET: LOW = OFF (MOSFET blocks, no ground path)
-	ret = gpio_pin_set_dt(&radar_crystal, 0);
+	// For ground-side MOSFET: HIGH = OFF (MOSFET blocks, no ground path)
+	ret = gpio_pin_set_dt(&radar_crystal, 1);
 	if (ret < 0) {
 		shell_error(sh, "Failed to set radar crystal GPIO: %d", ret);
 		return ret;
 	}
 	
 	radar_powered = false;
-	shell_print(sh, "✓ Radar crystal powered OFF (P1.08 = LOW, MOSFET blocking)");
+	shell_print(sh, "✓ Radar crystal powered OFF (P1.08 = HIGH, MOSFET blocking)");
 	
 	// Mark radar as not initialized since we powered it off
 	radar_initialized = false;
@@ -974,7 +974,7 @@ static int cmd_radar_power_status(const struct shell *sh, size_t argc, char **ar
 	shell_print(sh, "Radar Power Status:");
 	shell_print(sh, "  Crystal power: %s", radar_powered ? "ON" : "OFF");
 	shell_print(sh, "  Pin P1.08:     %s (MOSFET %s)", 
-	           radar_powered ? "HIGH" : "LOW",
+	           radar_powered ? "LOW" : "HIGH",
 	           radar_powered ? "conducting" : "blocking");
 	shell_print(sh, "  Initialized:   %s", radar_initialized ? "Yes" : "No");
 	
@@ -1092,6 +1092,15 @@ SHELL_CMD_REGISTER(radar, &sub_radar, "BGT60 radar commands", NULL);
 
 int main(void)
 {
+	// Initialize radar crystal power control - ensure it's OFF by default
+	if (gpio_is_ready_dt(&radar_crystal)) {
+		gpio_pin_configure_dt(&radar_crystal, GPIO_OUTPUT);
+		gpio_pin_set_dt(&radar_crystal, 1);  // HIGH = OFF (MOSFET blocks)
+		printk("✓ Radar crystal power initialized: OFF\n");
+	} else {
+		printk("⚠ Radar crystal GPIO not ready!\n");
+	}
+	
 	printk("\n==========================================\n");
 	printk("BGT60 Radar Shell Interface (Sensor API)\n");
 	printk("==========================================\n");

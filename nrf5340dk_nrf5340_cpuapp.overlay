@@ -36,16 +36,17 @@
 					<NRF_PSEL(SPIM_MOSI, 0, 28)>,
 					<NRF_PSEL(SPIM_MISO, 0, 26)>;
 			low-power-enable;
+			bias-pull-down;
 		};
 	};
 };
 
-// Radar reset pin control - P0.09
+// Radar reset pin control - P0.09 (with pulldown for removed chip)
 / {
 	radar_reset: radar-reset {
 		compatible = "gpio-leds";
 		radar_reset_pin: radar_reset_pin {
-			gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;  // Active low reset
+			gpios = <&gpio0 9 (GPIO_ACTIVE_LOW | GPIO_PULL_DOWN)>;  // Active low reset with pulldown
 			label = "Radar Reset";
 		};
 	};
@@ -54,7 +55,7 @@
 	radar_power: radar-power {
 		compatible = "gpio-leds";
 		radar_crystal_pin: radar_crystal_pin {
-			gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;  // P1.08 - Active high (ground-side MOSFET)
+			gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;  // P1.08 - HIGH = crystal ON, LOW = crystal OFF
 			label = "Radar Crystal Power";
 		};
 	};
